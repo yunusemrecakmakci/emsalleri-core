@@ -1,21 +1,13 @@
 const express = require('express');
+const veriBulutu = require('./db');
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// 🧠 KENDİ BAĞIMSIZ VERİ BULUTUMUZ (Data Warehouse)
-// Kullanıcılar link sorguladıkça bu havuz dinamik olarak büyüyecek!
-let veriBulutu = [
-    { marka: "golf", model: "Volkswagen Golf", yil: 2020, paket: "Comfortline", km: 85000, boya: "boyasiz", degisen: "degisensiz", motor: "1.6 TDI", vites: "Otomatik", fiyat: 1210000 },
-    { marka: "golf", model: "Volkswagen Golf", yil: 2021, paket: "Comfortline", km: 45000, boya: "boyasiz", degisen: "degisensiz", motor: "1.6 TDI", vites: "Otomatik", fiyat: 1290000 },
-    { marka: "golf", model: "Volkswagen Golf", yil: 2019, paket: "Comfortline", km: 95000, boya: "boyali", degisen: "degisensiz", motor: "1.6 TDI", vites: "Otomatik", fiyat: 1150000 },
-    { marka: "passat", model: "Volkswagen Passat", yil: 2019, paket: "Business", km: 110000, boya: "lokal", degisen: "degisensiz", motor: "1.6 TDI", vites: "Otomatik", fiyat: 1420000 }
-];
 
 // Akıllı Link Ayrıştırıcı Motor (Parser)
 function linktenVeriAyikla(link) {
     const url = link.toLowerCase();
     
-    // Varsayılan Akıllı Şablon (Eğer link karmaşıksa bu taban üzerinden analiz üretilir)
+    // Varsayılan Akıllı Şablon (Link analiz tabanı)
     let tespit = { 
         marka: "golf", 
         model: "Volkswagen Golf", 
@@ -31,7 +23,7 @@ function linktenVeriAyikla(link) {
     
     // Dinamik Link Analiz Kuralları
     if (url.includes("passat")) {
-        tespit = { marka: "passat", model: "Volkswagen Passat", yil: 2019, paket: "Business", km: 105000, boya: "lokal", degisen: "degisensiz", motor: "1.6 TDI", vites: "Otomatik", fiyat: 1410000 };
+        tespit = { marka: "passat", model: "Volkswagen Passat", yil: 2019, paket: "Business", km: 105000, border: "lokal", degisen: "degisensiz", motor: "1.6 TDI", vites: "Otomatik", fiyat: 1410000 };
     } else if (url.includes("civic")) {
         tespit = { marka: "civic", model: "Honda Civic", yil: 2021, paket: "Executive", km: 55000, boya: "boyasiz", degisen: "degisensiz", motor: "1.5 VTEC", vites: "Otomatik", fiyat: 1180000 };
     } else if (url.includes("corolla")) {
@@ -50,7 +42,7 @@ app.get('/', (req, res) => {
         // 1. Linki tara ve bilgileri cımbızla çek
         const yeniArac = linktenVeriAyikla(girilenLink);
         
-        // 2. Kendi veri bulutuna kaydet (Veri Bağımsızlığı İlkesi)
+        // 2. Kendi veri havuzuna kaydet (Veri Bağımsızlığı İlkesi)
         veriBulutu.push(yeniArac);
 
         // 3. Hafızadaki benzer kriterdeki araçları filtrele (100k altı, otomatik, değişensiz)
@@ -74,7 +66,7 @@ app.get('/', (req, res) => {
             model: `${yeniArac.model} (${yeniArac.yil})`,
             detay: `${yeniArac.motor} ${yeniArac.paket} ${yeniArac.vites}`,
             km: yeniArac.km.toLocaleString('tr-TR') + " KM",
-            ekspertiz: `${yeniArac.boya.toUpperCase()} / ${yeniArac.degisen.toUpperCase()}`,
+            ekspertiz: `${yeniArac.boya ? yeniArac.boya.toUpperCase() : 'BELİRTİLMEMİŞ'} / ${yeniArac.degisen.toUpperCase()}`,
             fiyat: yeniArac.fiyat.toLocaleString('tr-TR') + " TL",
             toplamVeri: veriBulutu.length
         };
